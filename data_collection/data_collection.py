@@ -26,20 +26,30 @@ def clean_segmented_image(seg_img):
     pass
     # return boxes, classes
 
+
+def _remove_snow(img, kernel_size=6):
+    '''
+        Assumes img is a single channel image
+        Remove snow using erode, then restort using dilate
+    '''
+    return cv2.morphologyEx(img, cv2.MORPH_OPEN, 
+                cv2.getStructuringElement(cv2.MORPH_RECT,(kernel_size,kernel_size)))
+
+
 def _get_background(seg_img):
     return cv2.inRange(seg_img, (255, 0, 255), (255, 0, 255))
 
 def _get_duckies(seg_img):
-    return cv2.inRange(seg_img, (100, 116, 226), (100, 118, 226))
+    return _remove_snow(cv2.inRange(seg_img, (100, 116, 226), (100, 118, 226)), kernel_size=4) #kepp a bit of snow for now, to get more of the duckies
 
 def _get_cones(seg_img):
     return cv2.inRange(segmented_obs, (226, 111, 101), (226, 111, 101))
 
 def _get_trucks(seg_img):
-    return cv2.inRange(segmented_obs, (116, 114, 117), (116, 114, 117))
+    return _remove_snow(cv2.inRange(segmented_obs, (116, 114, 117), (116, 114, 117)))
 
 def _get_buses(seg_img):
-    return cv2.inRange(segmented_obs, (216, 171, 15), (216, 171, 15))
+    return _remove_snow(cv2.inRange(segmented_obs, (216, 171, 15), (216, 171, 15)))
 
 seed(123)
 environment = launch_env()
@@ -95,8 +105,8 @@ while True:
         '''
 
 
-        class_seg = _get_background(segmented_obs)
-        # class_seg = _get_duckies(segmented_obs)
+        # class_seg = _get_background(segmented_obs)
+        class_seg = _get_duckies(segmented_obs)
         # class_seg = _get_cones(segmented_obs)
         # class_seg = _get_trucks(segmented_obs)
         # class_seg = _get_buses(segmented_obs)
@@ -108,6 +118,8 @@ while True:
 
 
         # TODO boxes, classes = clean_segmented_image(segmented_obs)
+
+        # TODO maybe save every other images (or every nth) to avoid too many basically repeat images?
 
         # TODO only save an image that's only background with some probability
         # TODO save_npz(obs, boxes, classes)
