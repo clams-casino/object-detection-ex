@@ -23,6 +23,8 @@ class Wrapper:
         # dimensions. You could resize the images before predicting, make your model dimension-agnostic somehow,
         # etc.
 
+        # TODO use cv resize to make images into 224x224
+
         # This method should return a tuple of three lists of numpy arrays. The first is the bounding boxes, the
         # second is the corresponding labels, the third is the scores (the probabilities)
 
@@ -38,7 +40,7 @@ class Wrapper:
         labels = []
         scores = []
         for pred in preds:
-            boxes.append(pred["boxes"].cpu().numpy())
+            boxes.append(pred["boxes"].cpu().numpy())      # TODO if we scale the image for training then we have to back scale the bounding boxes
             labels.append(pred["labels"].cpu().numpy())
             scores.append(pred["scores"].cpu().numpy())
 
