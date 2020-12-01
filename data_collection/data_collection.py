@@ -27,20 +27,42 @@ def clean_segmented_image(seg_img):
     # return boxes, classes
 
 
-def _remove_snow(img, kernel_size=6):
+def get_bounding_boxes(binary_seg_img):
+    '''
+        Takes a binary segmented image of a single class and returns a list of the bounding boxes
+    '''
+
+
+def _remove_snow(img, kernel_size=6, process_entire_image=True):
     '''
         Assumes img is a single channel image
         Remove snow using erode, then restort using dilate
     '''
-    return cv2.morphologyEx(img, cv2.MORPH_OPEN, 
-                cv2.getStructuringElement(cv2.MORPH_RECT,(kernel_size,kernel_size)))
+    if process_entire_image:
+        start_height = 0
+    else:
+        # If option is false, then do not apply to the top ~25% of the image where the snow is not present
+        h = img.shape[0]
+        start_height = int(np.floor(0.3*h))
+
+    # open to remove snow
+    processed_section = cv2.morphologyEx(img[start_height:,:], cv2.MORPH_OPEN, 
+                    cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(kernel_size,kernel_size)))
+
+    # close to stitch together seperated contours at distances
+    processed_section = cv2.morphologyEx(processed_section, cv2.MORPH_CLOSE, 
+                    cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(0.5*kernel_size),int(0.5*kernel_size))))
+
+    img[start_height:,:] = processed_section  #for duckies, some speckles remain, but can be filtered out by bounding box size
+
+    return img
 
 
 def _get_background(seg_img):
     return cv2.inRange(seg_img, (255, 0, 255), (255, 0, 255))
 
 def _get_duckies(seg_img):
-    return _remove_snow(cv2.inRange(seg_img, (100, 116, 226), (100, 118, 226)), kernel_size=4) #kepp a bit of snow for now, to get more of the duckies
+    return _remove_snow(cv2.inRange(seg_img, (100, 116, 226), (100, 118, 226)), kernel_size=6, process_entire_image=False) #kepp a bit of snow for now, to get more of the duckies
 
 def _get_cones(seg_img):
     return cv2.inRange(segmented_obs, (226, 111, 101), (226, 111, 101))
@@ -105,8 +127,8 @@ while True:
         '''
 
 
-        # class_seg = _get_background(segmented_obs)
-        class_seg = _get_duckies(segmented_obs)
+        class_seg = _get_background(segmented_obs)
+        # class_seg = _get_duckies(segmented_obs)
         # class_seg = _get_cones(segmented_obs)
         # class_seg = _get_trucks(segmented_obs)
         # class_seg = _get_buses(segmented_obs)
