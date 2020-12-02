@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 import argparse
 
+import os
+
 def _label2color(label):
     if label == 0:
         return (255, 0, 255)
@@ -42,9 +44,15 @@ def visualize_data_frame(data_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Display image and bounding boxes')
 
-    data_file = 'eval/dataset/48.npz'
 
-    visualization = visualize_data_frame(data_file)
+    dataset_directory = 'eval/dataset'
 
-    cv2.imshow('img', visualization)
-    cv2.waitKey(0)
+    for filename in os.listdir(dataset_directory):
+        if filename.endswith(".npz"): 
+            print('visualizing {}'.format(filename) )
+            filepath = os.path.join(dataset_directory, filename)
+            cv2.imshow(dataset_directory, visualize_data_frame(filepath))
+            cv2.waitKey(1000)
+            continue
+        else:
+            continue
