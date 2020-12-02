@@ -46,13 +46,18 @@ if __name__ == "__main__":
 
 
     dataset_directory = 'eval/dataset'
+    out_directory = 'eval_data_images/'
 
     for filename in os.listdir(dataset_directory):
         if filename.endswith(".npz"): 
             print('visualizing {}'.format(filename) )
             filepath = os.path.join(dataset_directory, filename)
-            cv2.imshow(dataset_directory, visualize_data_frame(filepath))
+            viz = visualize_data_frame(filepath)
+            cv2.imshow(dataset_directory, viz)
             cv2.waitKey(1000)
+            # outname = filename.split('.')[0] + '.png'
+            # outpath = os.path.join(out_directory, outname)
+            # cv2.imwrite(outpath, viz)
             continue
         else:
             continue

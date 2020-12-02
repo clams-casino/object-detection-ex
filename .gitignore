@@ -4,3 +4,4 @@ venv
 .npz
 *.pt
 !Dockerfile.pt
+eval_data_images/
