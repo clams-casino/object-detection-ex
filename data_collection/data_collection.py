@@ -129,8 +129,11 @@ while True:
         # environment.render(segment=int(nb_of_steps / 50) % 2 == 0)
 
 
-        # background_seg = _get_background(segmented_obs)
-
+        background_seg = _get_background(segmented_obs)
+        obs = cv2.resize(obs, NN_IMG_SIZE)
+        background_seg = cv2.resize(background_seg, NN_IMG_SIZE)
+        background_bb = get_bounding_boxes(background_seg)
+        obs_background_bb = draw_bounding_boxes(obs.copy(), background_bb)
 
         duckie_seg = _get_duckies(segmented_obs)
         obs = cv2.resize(obs, NN_IMG_SIZE)
@@ -156,8 +159,8 @@ while True:
         bus_bb = get_bounding_boxes(bus_seg)
         obs_bus_bb = draw_bounding_boxes(obs.copy(), bus_bb)
 
-        obs_bounding_boxes = obs_duckie_bb
-        class_seg = duckie_seg
+        obs_bounding_boxes = obs_background_bb
+        class_seg = background_seg
 
         side_by_side = np.hstack((obs_bounding_boxes, cv2.applyColorMap(class_seg, cv2.COLORMAP_SPRING)))
         cv2.imshow('segmented_class',side_by_side)
