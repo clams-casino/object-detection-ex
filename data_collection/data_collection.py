@@ -27,10 +27,40 @@ def clean_segmented_image(seg_img):
     # return boxes, classes
 
 
+def filter_boxes(boxes, min_area=None, min_aspect_ratio=None):
+    valid_boxes = []
+    for box in boxes:
+        w = box[2] - box[0]
+        h = box[3] - box[1]
+
+        if min_area is not None:
+            if w*h < min_area:
+                continue
+        if min_aspect_ratio is not None:
+            if h/w < min_aspect_ratio:
+                continue
+        valid_boxes.append(box)
+
+    return valid_boxes
+
+
 def get_bounding_boxes(binary_seg_img):
     '''
         Takes a binary segmented image of a single class and returns a list of the bounding boxes
     '''
+    contours, _ = cv2.findContours(binary_seg_img, cv2.RETR_EXTERNAL ,cv2.CHAIN_APPROX_SIMPLE)
+    boxes = []
+    for contour in contours:
+            x,y,w,h = cv2.boundingRect(contour)
+            boxes.append( np.array([x, y, x+w, y+h]) )
+            
+    return boxes
+
+
+def draw_bounding_boxes(img, boxes):
+    for box in boxes:
+        img = cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), (255,255,255), thickness=1)
+    return img
 
 
 def _remove_snow(img, kernel_size=6, process_entire_image=True):
@@ -51,7 +81,7 @@ def _remove_snow(img, kernel_size=6, process_entire_image=True):
 
     # close to stitch together seperated contours at distances
     processed_section = cv2.morphologyEx(processed_section, cv2.MORPH_CLOSE, 
-                    cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(0.5*kernel_size),int(0.5*kernel_size))))
+                    cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(1.0*kernel_size),int(1.0*kernel_size))))
 
     img[start_height:,:] = processed_section  #for duckies, some speckles remain, but can be filtered out by bounding box size
 
@@ -80,6 +110,8 @@ policy = PurePursuitPolicy(environment)
 
 MAX_STEPS = 500
 
+NN_IMG_SIZE = (224,224)
+
 while True:
     obs = environment.reset()
     environment.render(segment=True)
@@ -97,42 +129,37 @@ while True:
         # environment.render(segment=int(nb_of_steps / 50) % 2 == 0)
 
 
-        # obs_bgr = cv2.cvtColor(obs, cv2.COLOR_RGB2BGR)
-        # print('colored image shape')
-        # print(obs.shape) # TODO note that the image from the simulator is not square
-        # print('')
-        # cv2.imshow('observation',obs_bgr)
-        # cv2.waitKey(1)
-
-        # segmented_obs_bgr = cv2.cvtColor(segmented_obs, cv2.COLOR_RGB2BGR)
-        # print('segmentation image shape')
-        # print(segmented_obs.shape) # TODO note that the image from the simulator is not square
-        # print('')
-        # cv2.imshow('segmentation',segmented_obs_bgr)
-        # cv2.waitKey(1)
-
-        ''' THE SEGMENTED IMAGES IS ACTUALLY RGB,
-         where the segmented classes have the same color always
-        
-        0 - background -> rgb [255, 0, 255] 
-
-        1 - duckie -> rgb [100, 117, 226]
-
-        2 - cone -> rgb [226, 111, 101]
-
-        3 - truck -> rgb [116, 114, 117]
-
-        4 - bus -> rgb [216, 171, 15]
-
-        '''
+        # background_seg = _get_background(segmented_obs)
 
 
-        class_seg = _get_background(segmented_obs)
-        # class_seg = _get_duckies(segmented_obs)
-        # class_seg = _get_cones(segmented_obs)
-        # class_seg = _get_trucks(segmented_obs)
-        # class_seg = _get_buses(segmented_obs)
-        side_by_side = np.hstack((obs, cv2.applyColorMap(class_seg, cv2.COLORMAP_SPRING)))
+        duckie_seg = _get_duckies(segmented_obs)
+        obs = cv2.resize(obs, NN_IMG_SIZE)
+        duckie_seg = cv2.resize(duckie_seg, NN_IMG_SIZE)
+        duckie_bb = filter_boxes(get_bounding_boxes(duckie_seg))
+        obs_duckie_bb = draw_bounding_boxes(obs.copy(), duckie_bb)
+
+        cone_seg = _get_cones(segmented_obs)
+        obs = cv2.resize(obs, NN_IMG_SIZE)
+        cone_seg = cv2.resize(cone_seg, NN_IMG_SIZE)
+        cone_bb = filter_boxes(get_bounding_boxes(cone_seg))
+        obs_cone_bb = draw_bounding_boxes(obs.copy(), cone_bb)
+
+        truck_seg = _get_trucks(segmented_obs)
+        obs = cv2.resize(obs, NN_IMG_SIZE)
+        truck_seg = cv2.resize(truck_seg, NN_IMG_SIZE)
+        truck_bb = get_bounding_boxes(truck_seg)
+        obs_truck_bb = draw_bounding_boxes(obs.copy(), truck_bb)
+
+        bus_seg = _get_buses(segmented_obs)
+        obs = cv2.resize(obs, NN_IMG_SIZE)
+        bus_seg = cv2.resize(bus_seg, NN_IMG_SIZE)
+        bus_bb = get_bounding_boxes(bus_seg)
+        obs_bus_bb = draw_bounding_boxes(obs.copy(), bus_bb)
+
+        obs_bounding_boxes = obs_duckie_bb
+        class_seg = duckie_seg
+
+        side_by_side = np.hstack((obs_bounding_boxes, cv2.applyColorMap(class_seg, cv2.COLORMAP_SPRING)))
         cv2.imshow('segmented_class',side_by_side)
         # cv2.imshow('duckie', duckie_seg)
         cv2.waitKey(1)
