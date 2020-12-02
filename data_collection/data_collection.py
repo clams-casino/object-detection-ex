@@ -1,6 +1,5 @@
 import numpy as np
-
-import cv2 # TODO remove later
+import cv2
 
 from agent import PurePursuitPolicy
 from utils import launch_env, seed, makedirs, display_seg_mask, display_img_seg_mask
@@ -192,13 +191,18 @@ while True:
 
         boxes, labels = clean_segmented_image(segmented_obs)
         
-        obs_bounding_boxes = cv2.cvtColor(cv2.resize(obs.copy(), NN_IMG_SIZE), cv2.COLOR_RGB2BGR)
 
+        obs_bounding_boxes = cv2.cvtColor(cv2.resize(obs.copy(), NN_IMG_SIZE), cv2.COLOR_RGB2BGR)
         obs_bounding_boxes = draw_bounding_boxes(obs_bounding_boxes, boxes, labels)
 
         cv2.imshow('bounding boxes',obs_bounding_boxes)
         cv2.waitKey(1)
 
+        
+        if np.sum(np.array(labels)) > 0:
+            save_npz(cv2.resize(obs, NN_IMG_SIZE), boxes, labels)
+        else:
+            pass # image only has background, don't save
 
 
         # TODO maybe save every other images (or every nth) to avoid too many basically repeat images?
