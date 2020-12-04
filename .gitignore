@@ -5,3 +5,5 @@ venv
 *.pt
 !Dockerfile.pt
 eval_data_images/
+
+new_dataset/
