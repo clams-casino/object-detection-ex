@@ -27,7 +27,7 @@ def clean_segmented_image(seg_img, include_background=False):
     # duckies
     duckie_seg = _get_duckies(seg_img)
     duckie_seg = cv2.resize(duckie_seg, NN_IMG_SIZE)
-    duckie_bb = _filter_boxes(_get_bounding_boxes(duckie_seg))
+    duckie_bb = _filter_boxes(_get_bounding_boxes(duckie_seg), min_area=5)
     num_duckies = len(duckie_bb)
     if num_duckies > 0:
         boxes.extend(duckie_bb)
@@ -36,7 +36,7 @@ def clean_segmented_image(seg_img, include_background=False):
     # cones
     cone_seg = _get_cones(seg_img)
     cone_seg = cv2.resize(cone_seg, NN_IMG_SIZE)
-    cone_bb = _filter_boxes(_get_bounding_boxes(cone_seg))
+    cone_bb = _filter_boxes(_get_bounding_boxes(cone_seg), min_area=5)
     num_cones = len(cone_bb)
     if num_cones > 0:
         boxes.extend(cone_bb)
@@ -199,10 +199,10 @@ while True:
         cv2.waitKey(1)
 
         
-        if np.sum(np.array(labels)) > 0:
-            save_npz(cv2.resize(obs, NN_IMG_SIZE), boxes, labels)
-        else:
-            pass # image only has background, don't save
+        # if np.sum(np.array(labels)) > 0:
+        #     save_npz(cv2.resize(obs, NN_IMG_SIZE), boxes, labels)
+        # else:
+        #     pass # image only has background, don't save
 
 
         # TODO maybe save every other images (or every nth) to avoid too many basically repeat images?
