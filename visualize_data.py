@@ -45,8 +45,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Display image and bounding boxes')
 
 
-    dataset_directory = 'eval/dataset'
-    out_directory = 'eval_data_images/'
+    dataset_directory = 'data_collection/dataset'
+    out_directory = 'data_collection/dataset_images'
 
     for filename in os.listdir(dataset_directory):
         if filename.endswith(".npz"): 
@@ -54,10 +54,15 @@ if __name__ == "__main__":
             filepath = os.path.join(dataset_directory, filename)
             viz = visualize_data_frame(filepath)
             cv2.imshow(dataset_directory, viz)
-            cv2.waitKey(1000)
+            cv2.waitKey(0)
             # outname = filename.split('.')[0] + '.png'
             # outpath = os.path.join(out_directory, outname)
             # cv2.imwrite(outpath, viz)
             continue
         else:
             continue
+
+    # filepath = '/home/mike/duckietown/RH8/object-detection-ex/new_dataset/837.npz'
+    # viz = visualize_data_frame(filepath)
+    # cv2.imshow('img', viz)
+    # cv2.waitKey(0)
