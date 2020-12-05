@@ -12,6 +12,8 @@ BUS = 4
 
 NN_IMG_SIZE = (224,224)
 
+DATASET_SIZE = 2000
+
 npz_index = 0
 def save_npz(img, boxes, classes):
     global npz_index
@@ -191,7 +193,6 @@ while True:
 
         boxes, labels = clean_segmented_image(segmented_obs)
         
-
         obs_bounding_boxes = cv2.cvtColor(cv2.resize(obs.copy(), NN_IMG_SIZE), cv2.COLOR_RGB2BGR)
         obs_bounding_boxes = draw_bounding_boxes(obs_bounding_boxes, boxes, labels)
 
@@ -199,16 +200,17 @@ while True:
         cv2.waitKey(1)
 
         
-        # if np.sum(np.array(labels)) > 0:
-        #     save_npz(cv2.resize(obs, NN_IMG_SIZE), boxes, labels)
-        # else:
-        #     pass # image only has background, don't save
+        if np.sum(np.array(labels)) > 0:
+            save_npz(cv2.resize(obs, NN_IMG_SIZE), boxes, labels)
+        else:
+            pass # image only has background, don't save
 
-
-        # TODO maybe save every other images (or every nth) to avoid too many basically repeat images?
-
-        # TODO only save an image that's only background with some probability
-        # TODO save_npz(obs, boxes, classes)
+        if npz_index >= DATASET_SIZE:
+            print('collected {} frames, finishing'.format(npz_index))
+            exit(0)
+        else:
+            if (npz_index + 1) % 100 == 0:
+                print('collected {} frames out of {}'.format(npz_index + 1, DATASET_SIZE))
 
         nb_of_steps += 1
 
