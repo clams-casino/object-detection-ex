@@ -66,6 +66,8 @@ class Model(torch.nn.Module):
         # replace the pre-trained head with a new one
         self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
 
+    def save_model(self, path):
+        torch.save(self.model.state_dict(), path)
 
     def forward(self, x, y=None):
         return self.model(x) if y is None else self.model(x, y)
