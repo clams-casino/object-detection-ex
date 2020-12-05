@@ -7,3 +7,5 @@ venv
 eval_data_images/
 
 new_dataset/
+
+*.npz
