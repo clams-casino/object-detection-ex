@@ -9,3 +9,7 @@ eval_data_images/
 new_dataset/
 
 *.npz
+
+*.pyc
+
+.vscode
