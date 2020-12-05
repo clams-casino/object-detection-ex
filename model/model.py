@@ -1,6 +1,9 @@
 import torch
 from torchvision.transforms.functional import to_tensor
 
+import torchvision
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+
 
 class Wrapper:
     def __init__(self):
@@ -44,6 +47,10 @@ class Wrapper:
             labels.append(pred["labels"].cpu().numpy())
             scores.append(pred["scores"].cpu().numpy())
 
+        
+        # TODO filter bounding boxes by size here
+        # TODO can also merge bounding boxes if they're the same class and ontop of each other
+
         return boxes, labels, scores
 
 
@@ -51,7 +58,14 @@ class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
         # TODO Instantiate your weights etc here!
-        pass
+
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+
+        # get number of input features for the classifier
+        in_features = self.model.roi_heads.box_predictor.cls_score.in_features
+        # replace the pre-trained head with a new one
+        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
+
 
     def forward(self, x, y=None):
         return self.model(x) if y is None else self.model(x, y)
