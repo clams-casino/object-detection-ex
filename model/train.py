@@ -1,49 +1,15 @@
-
 import os
-import numpy as np
+import cv2
 import torch
-
-class DuckietownSegmentationDataset(object):
-    def __init__(self, root, transforms):  # would be 'data_collection/
-        self.root = root
-        self.transforms = transforms
-        # load all image files, sorting them to
-        # ensure that they are aligned
-        self.imgs = list(sorted(os.listdir(os.path.join(root, "dataset"))))
-
-
-    def __getitem__(self, idx):
-        # load images ad masks
-        dataframe_path = os.path.join(self.root, "dataset", self.imgs[idx])
-        dataframe = np.load(dataframe_path)
-
-        img = dataframe["arr_0"]     # image is a numpy array, in rgb order
-        boxes = dataframe["arr_1"]
-        labels = dataframe["arr_2"]
-
-        # convert everything into a torch.Tensor
-        boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        # there is only one class
-        labels = torch.as_tensor(labels, dtype=torch.int64)
-
-        image_id = torch.tensor([idx])
-
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["image_id"] = image_id
-
-        if self.transforms is not None:
-            img, target = self.transforms(img, target)
-
-        return img, target
-
-    def __len__(self):
-        return len(self.imgs)
-
-
-
+import torchvision
+import numpy as np
 import transforms as T
+import utils
+
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from engine import train_one_epoch
+from model import Model, Wrapper
+
 
 def get_transform(train):
     transforms = []
@@ -53,29 +19,68 @@ def get_transform(train):
     return T.Compose(transforms)
 
 
+class DuckDataset(object):
+    def __init__(self, dataset_dir, transforms):
+        self.dataset_dir = dataset_dir
+        self.transforms = transforms
+        
+        # load all image files, sorting them to
+        # ensure that they are aligned
+        self.npzs = list(sorted(os.listdir(dataset_dir)))
 
-from model import Model
-from engine import train_one_epoch
-import utils
+        # remove the readme file
+        if "README.md" in self.npzs:
+            self.npzs.remove("README.md")
+
+    def __getitem__(self, idx):
+        # load npz files
+        npz_path = os.path.join(self.dataset_dir, self.npzs[idx])
+        npz = np.load(npz_path)
+
+        img = npz[f"arr_{0}"] # Check if conversion to rgb is needed
+        boxes = npz[f"arr_{1}"]
+        classes = npz[f"arr_{2}"]
+
+        # convert boxes and labels into a torch.Tensor
+        boxes = torch.as_tensor(boxes, dtype=torch.float32) #maybe for img too
+        labels = torch.as_tensor(classes, dtype=torch.int64)
+        image_id = torch.as_tensor([int(self.npzs[idx].split(".")[0])])
+
+        target = {}
+        target["boxes"] = boxes
+        target["labels"] = labels
+        target["image_id"] = image_id
+
+        if self.transforms is not None:
+            img, target = self.transforms(img, target)
+
+        # img = torch.reshape(img, (224, 224, 3))
+
+        return img, target
+
+    def __len__(self):
+        return len(self.npzs)
+
 
 def main():
     # TODO train loop here!
+    # TODO don't forget to save the model's weights inside of `./weights`!
 
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    # use our dataset and defined transformations
-    root = os.path.dirname(__file__)
-    dataset = DuckietownSegmentationDataset(root, get_transform(train=True))
+    # Create the dataset object
+    dataset_dir = "../data_collection/dataset"
+    dataset = DuckDataset(dataset_dir, get_transform(train=True))
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=2, shuffle=True, num_workers=4,
+        dataset, batch_size=8, shuffle=True, num_workers=4,
         collate_fn=utils.collate_fn)
 
-    # get the model using our helper function
-    model = Model()
 
+    model = Model()
+    
     # move model to the right device
     model.to(device)
 
@@ -88,20 +93,21 @@ def main():
                                                    step_size=3,
                                                    gamma=0.1)
 
-    # let's train it for 10 epochs
-    num_epochs = 7
+    print("Starting training!")
+    print(f"Dataset size: {len(dataset)}")
+
+    num_epochs = 4
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=40)
         # update the learning rate
         lr_scheduler.step()
 
-    save_model_path = 'weights/model.pt'
-    print('saving trained model to {}'.format(save_model_path))
-    torch.save(model.state_dict(), save_model_path)
+    print("That's it for the training part!")
 
-    # TODO don't forget to save the model's weights inside of `./weights`!
+    # Save the model weights
+    torch.save(model.state_dict(), "./weights/model.pt")
 
 
 if __name__ == "__main__":
