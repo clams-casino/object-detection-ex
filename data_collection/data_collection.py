@@ -141,7 +141,7 @@ def _remove_snow(img, kernel_size=6, process_entire_image=True):
     processed_section = cv2.morphologyEx(img[start_height:,:], cv2.MORPH_OPEN, 
                     cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(kernel_size,kernel_size)))
 
-    # close to stitch together seperated contours at distances
+    # close to stitch together seperated cont #for duckies, some speckles remain, but can be filtered out by bounding box sizeours at distances
     processed_section = cv2.morphologyEx(processed_section, cv2.MORPH_CLOSE, 
                     cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(int(1.0*kernel_size),int(1.0*kernel_size))))
 
@@ -154,7 +154,7 @@ def _get_background(seg_img):
     return cv2.inRange(seg_img, (255, 0, 255), (255, 0, 255))
 
 def _get_duckies(seg_img):
-    return _remove_snow(cv2.inRange(seg_img, (100, 116, 226), (100, 118, 226)), kernel_size=6, process_entire_image=False) #kepp a bit of snow for now, to get more of the duckies
+    return _remove_snow(cv2.inRange(seg_img, (100, 116, 226), (100, 118, 226)), kernel_size=6, process_entire_image=False) 
 
 def _get_cones(seg_img):
     return cv2.inRange(segmented_obs, (226, 111, 101), (226, 111, 101))
@@ -190,12 +190,12 @@ while True:
         rewards.append(rew)
         # environment.render(segment=int(nb_of_steps / 50) % 2 == 0)
 
-
+        # get bounding boxes
         boxes, labels = clean_segmented_image(segmented_obs)
         
+        # visualize bounding boxes while collecting the dataset
         obs_bounding_boxes = cv2.cvtColor(cv2.resize(obs.copy(), NN_IMG_SIZE), cv2.COLOR_RGB2BGR)
         obs_bounding_boxes = draw_bounding_boxes(obs_bounding_boxes, boxes, labels)
-
         cv2.imshow('bounding boxes',obs_bounding_boxes)
         cv2.waitKey(1)
 
