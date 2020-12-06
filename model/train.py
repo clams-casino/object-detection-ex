@@ -9,12 +9,12 @@ class DuckietownSegmentationDataset(object):
         self.transforms = transforms
         # load all image files, sorting them to
         # ensure that they are aligned
-        self.imgs = list(sorted(os.listdir(os.path.join(root, "data_collection/dataset"))))
+        self.imgs = list(sorted(os.listdir(os.path.join(root, "dataset"))))
 
 
     def __getitem__(self, idx):
         # load images ad masks
-        dataframe_path = os.path.join(self.root, "data_collection/dataset", self.imgs[idx])
+        dataframe_path = os.path.join(self.root, "dataset", self.imgs[idx])
         dataframe = np.load(dataframe_path)
 
         img = dataframe["arr_0"]     # image is a numpy array, in rgb order
@@ -65,7 +65,7 @@ def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     # use our dataset and defined transformations
-    root = os.path.dirname(os.path.dirname(__file__))
+    root = os.path.dirname(__file__)
     dataset = DuckietownSegmentationDataset(root, get_transform(train=True))
 
     # define training and validation data loaders
