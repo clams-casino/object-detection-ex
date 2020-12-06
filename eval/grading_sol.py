@@ -5,7 +5,7 @@ import os
 import numpy as np
 from model import Wrapper
 
-dataset_files = list(filter(lambda x: "npz" in x, os.listdir("./dataset_mike")))
+dataset_files = list(filter(lambda x: "npz" in x, os.listdir("./dataset_charlie")))
 
 true_boxes = []
 pred_boxes = []
@@ -36,7 +36,7 @@ for nb_batch in trange(len(batches)):
     batch = batches[nb_batch]
 
     for nb_img, file in enumerate(batch):
-        with np.load(f'./dataset_mike/{file}') as data:
+        with np.load(f'./dataset_charlie/{file}') as data:
             img, boxes, classes = tuple([data[f"arr_{i}"] for i in range(3)])
 
             p_boxes, p_classes, p_scores = wrapper.predict(np.array([img]))
