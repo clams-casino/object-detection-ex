@@ -5,7 +5,7 @@ import os
 import numpy as np
 from model import Wrapper
 
-dataset_files = list(filter(lambda x: "npz" in x, os.listdir("./dataset")))
+dataset_files = list(filter(lambda x: "npz" in x, os.listdir("./dataset_mike")))
 
 true_boxes = []
 pred_boxes = []
@@ -15,8 +15,8 @@ def make_boxes(id, labels, scores, bboxes):
     for i in range(len(labels)):
         x1 = bboxes[i][0]
         y1 = bboxes[i][1]
-        x2 = bboxes[i][2] - x1
-        y2 = bboxes[i][3] - y1
+        x2 = bboxes[i][2]
+        y2 = bboxes[i][3]
 
         temp.append([id, labels[i], scores[i], x1, y1, x2, y2])
     return temp
@@ -36,7 +36,7 @@ for nb_batch in trange(len(batches)):
     batch = batches[nb_batch]
 
     for nb_img, file in enumerate(batch):
-        with np.load(f'./dataset/{file}') as data:
+        with np.load(f'./dataset_mike/{file}') as data:
             img, boxes, classes = tuple([data[f"arr_{i}"] for i in range(3)])
 
             p_boxes, p_classes, p_scores = wrapper.predict(np.array([img]))
@@ -48,5 +48,5 @@ for nb_batch in trange(len(batches)):
 true_boxes = np.array(true_boxes, dtype=float)
 pred_boxes = np.array(pred_boxes, dtype=float)
 # print(mean_average_precision(pred_boxes, true_boxes, box_format="midpoint", num_classes=5))
-print(mean_average_precision(pred_boxes, true_boxes, box_format="midpoint", num_classes=5).item())
+print(mean_average_precision(pred_boxes, true_boxes, box_format="corners", num_classes=5).item())
 # approx 87%!!!
