@@ -89,7 +89,7 @@ def main():
                                                    gamma=0.1)
 
     # let's train it for 10 epochs
-    num_epochs = 10
+    num_epochs = 7
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
