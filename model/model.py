@@ -43,7 +43,7 @@ class Wrapper:
         labels = []
         scores = []
         for pred in preds:
-            boxes.append(pred["boxes"].cpu().numpy())      # TODO if we scale the image for training then we have to back scale the bounding boxes
+            boxes.append(pred["boxes"].cpu().numpy())
             labels.append(pred["labels"].cpu().numpy())
             scores.append(pred["scores"].cpu().numpy())
 
@@ -65,9 +65,6 @@ class Model(torch.nn.Module):
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
         # replace the pre-trained head with a new one
         self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
-
-    def save_model(self, path):
-        torch.save(self.model.state_dict(), path)
 
     def forward(self, x, y=None):
         return self.model(x) if y is None else self.model(x, y)

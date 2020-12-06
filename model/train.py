@@ -99,7 +99,7 @@ def main():
 
     save_model_path = 'weights/model.pt'
     print('saving trained model to {}'.format(save_model_path))
-    model.save_model(save_model_path)
+    torch.save(model.state_dict(), save_model_path)
 
     # TODO don't forget to save the model's weights inside of `./weights`!
 
