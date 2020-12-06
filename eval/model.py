@@ -16,7 +16,7 @@ class Wrapper:
         self.model.to(self.device)
         self.model.eval()
 
-    def predict(self, batch_or_image, area_thresh=20.0, cone_size_red=0.8, duck_size_red=0.9):
+    def predict(self, batch_or_image, area_thresh=10.0, cone_size_red=0.8, duck_size_red=0.9):
         # TODO: Make your model predict here!
 
         # The given batch_or_image parameter will be a numpy array (ie either a 224 x 224 x 3 image, or a
