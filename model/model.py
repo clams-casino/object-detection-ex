@@ -35,14 +35,7 @@ class Wrapper:
             batch = batch_or_image
 
         with torch.no_grad():
-            input_list = []
-            for img in batch:
-                if img.shape[0] != 224 or img.shape[1] != 224:
-                    img = cv2.resize(img, (224, 224))
-
-                input_list.append(to_tensor(img).to(device=self.device, dtype=torch.float))
-            
-            preds = self.model(input_list)
+            preds = self.model([to_tensor(cv2.resize(img, (224,224)).to(device=self.device, dtype=torch.float) for img in batch]))
 
         boxes = []
         labels = []
