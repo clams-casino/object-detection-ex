@@ -54,6 +54,7 @@ class Wrapper:
             filt_pred_labels = []
             filt_pred_scores = []
             
+            # Filter predictions that we know to be bad
             for i in range(pred_boxes.shape[0]):
                 box = pred_boxes[i]
                 label = pred["labels"].cpu().numpy()[i]
